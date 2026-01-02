@@ -1,5 +1,3 @@
-# RESUME PARSER AI PROJECT
-
 import pandas as pd
 import nltk
 import re
@@ -11,80 +9,76 @@ from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.metrics.pairwise import cosine_similarity
 
-# STEP 1: SETUP AND DOWNLOADS
-
+## STEP 1: SETUP AND DOWNLOADS
 print("Step 1: Setting up NLTK...")
+
 try:
     nltk.data.find('tokenizers/punkt')
 except LookupError:
     nltk.download('punkt')
-    nltk.download('punkt_tab') # Specific download for newer Python versions
+    nltk.download('punkt_tab')  
 
 try:
     nltk.data.find('corpora/stopwords')
 except LookupError:
     nltk.download('stopwords')
 
-print("✅ Setup Complete.")
+print(" Setup Complete.")
 
-#CLEAN THE TEXT
-
+# CLEAN THE TEXT
 def clean_text(text):
-    
     if not isinstance(text, str):
         return ""
     text = text.lower()
     text = re.sub(r'http\S+', '', text)
     text = text.translate(str.maketrans('', '', string.punctuation))
     text = re.sub(r'\d+', '', text)
+
     tokens = nltk.word_tokenize(text)
     stop_words = set(nltk.corpus.stopwords.words('english'))
+
     filtered_tokens = [word for word in tokens if word not in stop_words]
+
     return " ".join(filtered_tokens)
 
-# STEP 2: LOAD DATA
+## STEP 2: DATA LOADING
+print("Step 2: Loading Dataset...")
 
-print("\nStep 2: Loading Dataset...")
-
-# Name of your CSV file. 
 csv_filename = 'UpdatedResumeDataSet.csv'
 
 if not os.path.exists(csv_filename):
-    print(f"❌ ERROR: I cannot find '{csv_filename}'.")
-    print(f"   Please check if the file is in this folder: {os.getcwd()}")
+    print(f"ERROR: I cannot find '{csv_filename}'.")
+    print(f"Please verify whether the file is located in this folder: {os.getcwd()}")
     exit()
 
-# Read the file
 df = pd.read_csv(csv_filename)
-print(f"✅ Dataset loaded. Found {len(df)} resumes.")
+print(f"The dataset has been loaded. Found {len(df)} resumes.")
 
-# Identify the column with the Resume Text 
 resume_col = 'Resume'
 if resume_col not in df.columns:
     resume_col = df.columns[1]
-    print(f"⚠️ 'Resume' column not found. Using '{resume_col}' instead.")
+    print(f"'Resume' column not found. Instead using '{resume_col}'")
 
-# STEP 3: PREPROCESSING (CLEANING)
+##Step 3: Cleaning Resume Text...
 
-print("\nStep 3: Cleaning Resume Text...")
 df['Cleaned_Resume'] = df[resume_col].apply(clean_text)
-print("✅ Cleaning Complete.")
+print("All cleaned up.")
 
-# STEP 4: MACHINE LEARNING (CLUSTERING)
+##Step 4: Training AI Model...
 
 print("\nStep 4: Training AI Model...")
+
 vectorizer = TfidfVectorizer(max_features=1500, stop_words='english')
 X = vectorizer.fit_transform(df['Cleaned_Resume'])
 
-# B. Group similar resumes (Clustering)
-# We will group them into 4 general categories
 k = 4
 kmeans = KMeans(n_clusters=k, random_state=42, n_init=10)
 kmeans.fit(X)
-df['Cluster'] = kmeans.labels_
-print(f"✅ Model trained. Resumes grouped into {k} clusters.")
 
-# STEP 5: VISUALIZATION (SAVE GRAPH)
+df['Cluster'] = kmeans.labels_
+print(f" Model’s ready. Resumes grouped into {k} clusters.")
+
+## STEP 5: VISUALIZATION (SAVE GRAPH)
 
 print("\nStep 5: Creating Visualization...")
 
@@ -104,12 +98,12 @@ plt.xlabel('Principal Component 1')
 plt.ylabel('Principal Component 2')
 plt.colorbar(label='Cluster Group')
 
-# Save the graph instead of showing it (safer for scripts)
+# Save the graph instead of showing it 
 plt.savefig('../output/clusters_plot.png', dpi=150, bbox_inches='tight')
 plt.close() 
-print("✅ Graph saved to: output/clusters_plot.png")
+print(" Graph saved to: output/clusters_plot.png")
 
-# STEP 6: DYNAMIC CANDIDATE SCORING
+## STEP 6: DYNAMIC CANDIDATE SCORING
 
 print("\n" + "="*50)
 print("Step 6: HR CANDIDATE SEARCH")
@@ -120,13 +114,13 @@ print("\nPlease type the Job Description below (Press 'Enter' when done):")
 print("-" * 50)
 
 # This line waits for the user to type and press Enter
-user_jd = input(">> ")
+user_jd = input(">> ")   #jd=jod description
 
-# Check if user typed something (not empty)
+# Check if user typed something 
 if not user_jd.strip():
-    print("❌ Error: No job description provided.")
+    print(" Error: No job description provided.")
 else:
-    print("\n👉 Analyzing your Job Description...")
+    print("\n Analyzing your Job Description...")
     
     # 2. Clean the typed text (using our same function)
     cleaned_jd = clean_text(user_jd)
@@ -148,12 +142,11 @@ else:
     # We set a threshold. If the BEST match is less than 1.5 out of 10, we say "No match".
     best_score = top_candidates.iloc[0]['Score_Out_of_10']
     threshold = 1.5 
-
     if best_score < threshold:
-        print("\n❌ Result: No suitable candidates found for this job description.")
+        print("\n Result: No suitable candidates found for this job description.")
         print(f"(The closest match was only {best_score:.2f}/10)")
     else:
-        print("\n✅ Result: Candidates Found!")
+        print("\n Result: Candidates Found!")
         print(f"(Top Match Score: {best_score:.2f}/10)")
         print("-" * 50)
         
@@ -170,9 +163,9 @@ else:
             print(f"Snippet: ...{row['Cleaned_Resume'][100:160]}...")
             print("-" * 50)
 
-# FINAL SAVE (Still saves the data so you can review it)
+## STEP 7: FINAL SAVE 
 
 output_path = '../output/clustered_resumes.csv'
 df.to_csv(output_path, index=False)
-print(f"\n📁 Data saved to: {output_path}")
-print("🚀 Process Complete. Thank you for using Resume Parser AI.")
+print(f"\n Data saved to: {output_path}")
+print(" Process Complete. Thank you for using Resume Parser AI.")
